@@ -20,7 +20,10 @@ public class ArchidektService : IArchidektService
     private const string ARCHIDEKT_BASE_URL = "https://archidekt.com";
     private const string PRECONS_USER = "Archidekt_Precons";
     private const string CACHE_KEY_PRECONS = "archidekt_precons";
+    private const string CACHE_DIRECTORY = "Cache/Precons";
+    private const string CACHE_INDEX_FILE = "precons_index.json";
     private readonly TimeSpan CACHE_DURATION = TimeSpan.FromHours(6); // Cache for 6 hours
+    private readonly TimeSpan FILE_CACHE_DURATION = TimeSpan.FromDays(7); // File cache for 7 days
 
     public ArchidektService(HttpClient httpClient, IMemoryCache cache, ILogger<ArchidektService> logger)
     {
@@ -37,11 +40,20 @@ public class ArchidektService : IArchidektService
 
     public async Task<List<PreconDeck>> GetPreconDecksAsync()
     {
-        // Check cache first
+        // Check memory cache first
         if (_cache.TryGetValue(CACHE_KEY_PRECONS, out List<PreconDeck>? cachedPrecons) && cachedPrecons != null)
         {
-            _logger.LogInformation("Retrieved {Count} precon decks from cache", cachedPrecons.Count);
+            _logger.LogInformation("Retrieved {Count} precon decks from memory cache", cachedPrecons.Count);
             return cachedPrecons;
+        }
+
+        // Check file cache
+        var fileCachedPrecons = await LoadPreconsFromFileCacheAsync();
+        if (fileCachedPrecons != null && fileCachedPrecons.Count > 0)
+        {
+            _cache.Set(CACHE_KEY_PRECONS, fileCachedPrecons, CACHE_DURATION);
+            _logger.LogInformation("Retrieved {Count} precon decks from file cache", fileCachedPrecons.Count);
+            return fileCachedPrecons;
         }
 
         try
@@ -66,7 +78,7 @@ public class ArchidektService : IArchidektService
                     try
                     {
                         var fullDeck = await GetFullDeckAsync(deck.Id);
-                        return ConvertToPreconDeck(fullDeck, deck);
+                        return await ConvertToPreconDeckAsync(fullDeck, deck);
                     }
                     catch (Exception ex)
                     {
@@ -89,8 +101,9 @@ public class ArchidektService : IArchidektService
                 }
             }
 
-            // Cache the results
+            // Cache the results in memory and files
             _cache.Set(CACHE_KEY_PRECONS, precons, CACHE_DURATION);
+            await SavePreconsToFileCacheAsync(precons);
             
             _logger.LogInformation("Successfully fetched and cached {Count} precon decks from Archidekt", precons.Count);
             return precons;
@@ -109,7 +122,7 @@ public class ArchidektService : IArchidektService
         try
         {
             var fullDeck = await GetFullDeckAsync(deckId);
-            return ConvertToPreconDeck(fullDeck, null);
+            return await ConvertToPreconDeckAsync(fullDeck, null);
         }
         catch (Exception ex)
         {
@@ -121,7 +134,8 @@ public class ArchidektService : IArchidektService
     public void ClearCache()
     {
         _cache.Remove(CACHE_KEY_PRECONS);
-        _logger.LogInformation("Cleared Archidekt precon cache");
+        ClearFileCache();
+        _logger.LogInformation("Cleared Archidekt precon cache and file cache");
     }
 
     private async Task<List<ArchidektDeckSummary>> GetUserDecksAsync(string username)
@@ -333,7 +347,7 @@ public class ArchidektService : IArchidektService
         return deck ?? throw new InvalidOperationException($"Failed to deserialize deck {deckId}");
     }
 
-    private PreconDeck ConvertToPreconDeck(ArchidektDeck archidektDeck, ArchidektDeckSummary? summary)
+    private async Task<PreconDeck> ConvertToPreconDeckAsync(ArchidektDeck archidektDeck, ArchidektDeckSummary? summary)
     {
         if (archidektDeck == null)
         {
@@ -362,10 +376,10 @@ public class ArchidektService : IArchidektService
         // Determine theme from deck name and tags
         var theme = DetermineTheme(archidektDeck);
 
-        // Get commander image URL (use first commander)
+        // Get commander image URL (use first commander with better Scryfall integration)
         var imageUrl = commanders.Length > 0 ? 
-            $"https://cards.scryfall.io/art_crop/front/{GetScryfallImagePath(commanders[0])}" : 
-            string.Empty;
+            await GetCommanderThumbnailAsync(commanders[0]) : 
+            GetDefaultPreconThumbnail();
 
         return new PreconDeck
         {
@@ -580,15 +594,222 @@ public class ArchidektService : IArchidektService
         return "Mixed";
     }
 
-    private string GetScryfallImagePath(string cardName)
+    private async Task<string> GetCommanderThumbnailAsync(string cardName)
     {
-        // This is a simplified approach - in reality you'd want to query Scryfall's API
-        // or maintain a mapping. For now, return a generic path
-        var normalized = cardName.ToLower()
-            .Replace(" ", "-")
-            .Replace(",", "")
-            .Replace("'", "");
+        try
+        {
+            // Use Scryfall's named card API for better thumbnails
+            var encodedName = Uri.EscapeDataString(cardName);
+            var scryfallUrl = $"https://api.scryfall.com/cards/named?exact={encodedName}";
+            
+            using var tempClient = new HttpClient();
+            tempClient.Timeout = TimeSpan.FromSeconds(5); // Quick timeout for thumbnails
+            
+            var response = await tempClient.GetAsync(scryfallUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var cardData = JsonSerializer.Deserialize<JsonElement>(content);
+                
+                // Try to get small image first, then art_crop, then normal
+                if (cardData.TryGetProperty("image_uris", out var imageUris))
+                {
+                    if (imageUris.TryGetProperty("small", out var smallImage))
+                        return smallImage.GetString() ?? GetFallbackThumbnail(cardName);
+                    
+                    if (imageUris.TryGetProperty("art_crop", out var artCrop))
+                        return artCrop.GetString() ?? GetFallbackThumbnail(cardName);
+                        
+                    if (imageUris.TryGetProperty("normal", out var normal))
+                        return normal.GetString() ?? GetFallbackThumbnail(cardName);
+                }
+                
+                // Handle double-faced cards
+                if (cardData.TryGetProperty("card_faces", out var cardFaces) && cardFaces.GetArrayLength() > 0)
+                {
+                    var firstFace = cardFaces[0];
+                    if (firstFace.TryGetProperty("image_uris", out var faceImageUris))
+                    {
+                        if (faceImageUris.TryGetProperty("small", out var faceSmall))
+                            return faceSmall.GetString() ?? GetFallbackThumbnail(cardName);
+                            
+                        if (faceImageUris.TryGetProperty("art_crop", out var faceArtCrop))
+                            return faceArtCrop.GetString() ?? GetFallbackThumbnail(cardName);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to fetch Scryfall thumbnail for card: {CardName}", cardName);
+        }
         
-        return $"a/0/a0000000-0000-0000-0000-000000000000.jpg";
+        return GetFallbackThumbnail(cardName);
+    }
+    
+    private string GetFallbackThumbnail(string cardName)
+    {
+        // Create a predictable fallback using card name hash for variety
+        var hash = cardName.GetHashCode();
+        var imageNumber = Math.Abs(hash % 10) + 1; // 1-10 for variety
+        
+        // Use Magic-themed placeholder images or a generic Magic card back
+        return $"https://cards.scryfall.io/art_crop/front/0/0/0000579f-7b35-4ed3-b44c-db2a538066fe.jpg?v={imageNumber}";
+    }
+    
+    private string GetDefaultPreconThumbnail() 
+    {
+        // Default thumbnail for decks without commanders
+        return "https://cards.scryfall.io/art_crop/front/0/0/0000579f-7b35-4ed3-b44c-db2a538066fe.jpg";
+    }
+
+    private async Task<List<PreconDeck>?> LoadPreconsFromFileCacheAsync()
+    {
+        try
+        {
+            var cacheDir = Path.Combine(Directory.GetCurrentDirectory(), CACHE_DIRECTORY);
+            var indexFile = Path.Combine(cacheDir, CACHE_INDEX_FILE);
+
+            if (!File.Exists(indexFile))
+            {
+                _logger.LogInformation("Index file not found: {IndexFile}", indexFile);
+                return null;
+            }
+
+            // Don't check expiration for now - just load the cached data
+            _logger.LogInformation("Loading precons from file cache: {IndexFile}", indexFile);
+
+            var indexContent = await File.ReadAllTextAsync(indexFile);
+            var preconFiles = JsonSerializer.Deserialize<Dictionary<string, string>>(indexContent);
+            
+            if (preconFiles == null)
+            {
+                _logger.LogWarning("Failed to deserialize index file");
+                return null;
+            }
+
+            var precons = new List<PreconDeck>();
+            
+            foreach (var (preconName, fileName) in preconFiles)
+            {
+                try
+                {
+                    var filePath = Path.Combine(cacheDir, fileName);
+                    if (File.Exists(filePath))
+                    {
+                        var preconJson = await File.ReadAllTextAsync(filePath);
+                        
+                        // Use JsonSerializer with custom options for flexibility
+                        var options = new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true,
+                            AllowTrailingCommas = true
+                        };
+                        
+                        // Use the flexible JSON model first
+                        var preconJsonModel = JsonSerializer.Deserialize<PreconJsonModel>(preconJson, options);
+                        if (preconJsonModel != null)
+                        {
+                            var precon = preconJsonModel.ToPreconDeck();
+                            
+                            // Ensure name is set if missing
+                            if (string.IsNullOrEmpty(precon.Name))
+                            {
+                                precon.Name = preconName;
+                            }
+                            
+                            precons.Add(precon);
+                            _logger.LogDebug("Loaded precon: {Name} (Year: {Year})", precon.Name, precon.Year);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Precon file not found: {FilePath} for {PreconName}", filePath, preconName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to load cached precon file: {FileName} for {PreconName}", fileName, preconName);
+                }
+            }
+
+            _logger.LogInformation("Loaded {Count} precons from file cache", precons.Count);
+            return precons.Count > 0 ? precons : null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load precons from file cache");
+            return null;
+        }
+    }
+
+    private async Task SavePreconsToFileCacheAsync(List<PreconDeck> precons)
+    {
+        try
+        {
+            var cacheDir = Path.Combine(Directory.GetCurrentDirectory(), CACHE_DIRECTORY);
+            Directory.CreateDirectory(cacheDir);
+
+            var preconFiles = new Dictionary<string, string>();
+            var options = new JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
+
+            foreach (var precon in precons)
+            {
+                try
+                {
+                    var sanitizedName = SanitizeFileName(precon.Name ?? "Unknown");
+                    var fileName = $"{sanitizedName}_{precon.Year}.json";
+                    var filePath = Path.Combine(cacheDir, fileName);
+                    
+                    var preconJson = JsonSerializer.Serialize(precon, options);
+                    await File.WriteAllTextAsync(filePath, preconJson);
+                    
+                    preconFiles[precon.Name ?? "Unknown"] = fileName;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to save precon to cache: {PreconName}", precon.Name);
+                }
+            }
+
+            // Save index file
+            var indexFile = Path.Combine(cacheDir, CACHE_INDEX_FILE);
+            var indexJson = JsonSerializer.Serialize(preconFiles, options);
+            await File.WriteAllTextAsync(indexFile, indexJson);
+            
+            _logger.LogInformation("Saved {Count} precons to file cache", precons.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save precons to file cache");
+        }
+    }
+
+    private void ClearFileCache()
+    {
+        try
+        {
+            var cacheDir = Path.Combine(Directory.GetCurrentDirectory(), CACHE_DIRECTORY);
+            if (Directory.Exists(cacheDir))
+            {
+                Directory.Delete(cacheDir, true);
+                _logger.LogInformation("Cleared file cache directory");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to clear file cache directory");
+        }
+    }
+
+    private static string SanitizeFileName(string fileName)
+    {
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var sanitized = string.Join("_", fileName.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries));
+        return sanitized.Length > 50 ? sanitized.Substring(0, 50) : sanitized;
     }
 }

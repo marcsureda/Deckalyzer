@@ -1,0 +1,32 @@
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# Visual Studio files
+.vs/
+*.rsuser
+*.suo
+*.user
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+
+# NuGet Packages
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+
+# Node.js
+node_modules/
+dist/
+
+# Note: Cache files are now included in repository for offline functionality

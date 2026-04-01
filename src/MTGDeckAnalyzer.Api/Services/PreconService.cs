@@ -23,8 +23,14 @@ public class PreconService : IPreconService
     {
         try
         {
-            // Get all precons from Archidekt
+            // Get all precons from Archidekt (which prioritizes file cache)
             var allPrecons = await _archidektService.GetPreconDecksAsync();
+            
+            if (allPrecons.Count == 0)
+            {
+                _logger.LogWarning("No precons loaded from ArchidektService, falling back to static data");
+                return await GetFallbackPrecons(query, year, colors, page, pageSize);
+            }
             
             // Apply filters
             var filtered = allPrecons.AsQueryable();
@@ -51,7 +57,9 @@ public class PreconService : IPreconService
 
             var total = filtered.Count();
             var precons = filtered
-                .OrderBy(p => p.Name)
+                .AsEnumerable()
+                .OrderByDescending(p => int.TryParse(p.Year, out int y) ? y : 0)
+                .ThenBy(p => p.Name)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
@@ -69,7 +77,7 @@ public class PreconService : IPreconService
         {
             _logger.LogError(ex, "Failed to search precons");
             
-            // Return fallback static data if Archidekt fails
+            // Return fallback static data if everything fails
             return await GetFallbackPrecons(query, year, colors, page, pageSize);
         }
     }

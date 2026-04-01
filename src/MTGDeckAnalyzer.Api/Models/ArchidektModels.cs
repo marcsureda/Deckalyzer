@@ -18,7 +18,7 @@ public class ArchidektCard
 {
     public long Id { get; set; }  // Changed from int to long
     public List<string> Categories { get; set; } = [];
-    public bool Companion { get; set; }
+    public bool? Companion { get; set; }  // Made nullable
     public int Quantity { get; set; }
     public ArchidektCardDetail Card { get; set; } = new();
 }

@@ -156,13 +156,28 @@ public class TokenInfo
 public class PreconDeck
 {
     public string Name { get; set; } = string.Empty;
-    public string Year { get; set; } = string.Empty;
+    
+    private object? _year;
+    public string Year 
+    { 
+        get => _year?.ToString() ?? string.Empty;
+        set => _year = value;
+    }
+    
+    // Support both array and list deserialization
     public string[] Commanders { get; set; } = [];
     public string[] ColorIdentity { get; set; } = [];
     public string DeckList { get; set; } = string.Empty;
     public string Theme { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
     public decimal? Price { get; set; }
+    
+    // Property to handle numeric year from JSON
+    public int YearNumber
+    {
+        get => int.TryParse(Year, out int year) ? year : 0;
+        set => _year = value;
+    }
 }
 
 public class PreconSearchResult
