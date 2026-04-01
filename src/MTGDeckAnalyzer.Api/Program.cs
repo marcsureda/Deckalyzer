@@ -20,9 +20,11 @@ builder.Services.AddCors(options =>
 // Register services
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient<ScryfallService>();
+builder.Services.AddHttpClient<ArchidektService>();
 builder.Services.AddSingleton<DeckParserService>();
 builder.Services.AddSingleton<PowerLevelAnalyzer>();
 builder.Services.AddScoped<DeckAnalysisService>();
+builder.Services.AddScoped<IArchidektService, ArchidektService>();
 builder.Services.AddScoped<IPreconService, PreconService>();
 
 var app = builder.Build();

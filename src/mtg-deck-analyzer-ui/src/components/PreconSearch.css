@@ -93,17 +93,47 @@
   min-width: 120px;
   cursor: pointer;
   transition: all 0.2s ease;
+  /* Ensure dropdown arrow is visible */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 8px center;
+  background-repeat: no-repeat;
+  background-size: 16px 12px;
+  padding-right: 32px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.year-select option {
+  background: #1a1a2e;
+  color: #ffffff;
+  padding: 8px 12px;
+  border: none;
+  font-size: 14px;
+}
+
+.year-select option:hover {
+  background: rgba(212, 175, 55, 0.2);
+  color: #d4af37;
+}
+
+.year-select option:checked {
+  background: #d4af37;
+  color: #1a1a2e;
+  font-weight: 600;
 }
 
 .year-select:hover {
   border-color: rgba(212, 175, 55, 0.3);
-  background: rgba(255, 255, 255, 0.08);
+  background-color: rgba(255, 255, 255, 0.08);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23d4af37' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
 }
 
 .year-select:focus {
   outline: none;
   border-color: #d4af37;
   box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23d4af37' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
 }
 
 .clear-button {
