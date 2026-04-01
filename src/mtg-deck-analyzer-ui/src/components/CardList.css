@@ -1,0 +1,163 @@
+.card-list-section {
+  position: relative;
+}
+
+.card-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.card-list-header h3 {
+  white-space: nowrap;
+}
+
+.card-filter {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 8px 14px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  outline: none;
+  width: 220px;
+  transition: border-color 0.2s;
+}
+
+.card-filter:focus {
+  border-color: var(--accent-blue);
+}
+
+.card-list-table-wrap {
+  overflow-x: auto;
+}
+
+.card-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.card-list-table th {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.card-list-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.card-list-table th.sortable:hover {
+  color: var(--accent-blue);
+}
+
+.card-list-table th.num,
+.card-list-table td.num {
+  text-align: right;
+}
+
+.card-list-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.card-list-table tr:hover {
+  background: var(--bg-card-hover);
+}
+
+.commander-row {
+  background: rgba(74, 158, 255, 0.05);
+}
+
+.card-name-cell a {
+  color: var(--accent-blue);
+  text-decoration: none;
+}
+
+.card-name-cell a:hover {
+  text-decoration: underline;
+}
+
+.type-cell {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.card-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tag-commander {
+  background: rgba(74, 158, 255, 0.2);
+  color: var(--accent-blue);
+}
+
+.tag-gc {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--accent-yellow);
+}
+
+.tag-fast {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--accent-green);
+}
+
+.tag-tutor {
+  background: rgba(139, 92, 246, 0.2);
+  color: var(--accent-purple);
+}
+
+.tag-combo {
+  background: rgba(249, 115, 22, 0.2);
+  color: var(--accent-orange);
+}
+
+.tag-extra {
+  background: rgba(6, 182, 212, 0.2);
+  color: #06b6d4;
+}
+
+.tag-mld {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--accent-red);
+}
+
+.card-preview {
+  position: fixed;
+  top: 50%;
+  right: 24px;
+  transform: translateY(-50%);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.card-preview img {
+  width: 280px;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}

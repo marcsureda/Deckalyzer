@@ -1,0 +1,319 @@
+.deck-gallery-section {
+  position: relative;
+}
+
+.deck-gallery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.deck-gallery-header h3 {
+  white-space: nowrap;
+}
+
+.deck-gallery-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.toggle-btn {
+  background: var(--bg-primary);
+  border: none;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+
+.toggle-btn.active {
+  background: var(--accent-blue);
+  color: white;
+}
+
+.toggle-btn:hover:not(.active) {
+  background: var(--bg-card-hover);
+}
+
+.gallery-select {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.gallery-select:focus {
+  border-color: var(--accent-blue);
+}
+
+/* Groups */
+.deck-gallery-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.gallery-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 10px;
+}
+
+.gallery-group-icon {
+  font-size: 1rem;
+}
+
+.gallery-group-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.gallery-group-count {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* Card Grid */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.gallery-card {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  aspect-ratio: 488 / 680;
+  background: var(--bg-primary);
+}
+
+.gallery-card:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 2;
+}
+
+.gallery-commander {
+  border: 2px solid var(--accent-blue);
+  box-shadow: 0 0 12px rgba(74, 158, 255, 0.3);
+}
+
+/* Badges — always visible over card images */
+.gallery-badge {
+  position: absolute;
+  z-index: 3;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.6rem;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  pointer-events: none;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Game Changer — top-right */
+.gallery-badge-gc {
+  top: 4px;
+  right: 4px;
+  background: rgba(180, 130, 50, 0.8);
+}
+
+/* Commander — top-left, gold/blue */
+.gallery-badge-cmdr {
+  top: 4px;
+  left: 4px;
+  background: linear-gradient(135deg, rgba(74, 144, 226, 0.85), rgba(180, 140, 50, 0.85));
+  font-size: 0.7rem;
+  padding: 2px 5px;
+}
+
+/* Combo Piece — below commander on left (or top-left if no commander) */
+.gallery-badge-combo {
+  top: 4px;
+  left: 4px;
+  background: rgba(220, 60, 60, 0.8);
+}
+
+.gallery-badge-cmdr ~ .gallery-badge-combo {
+  top: 26px;
+}
+
+/* Tutor — stacks below other left badges */
+.gallery-badge-tutor {
+  top: 4px;
+  left: 4px;
+  background: rgba(140, 80, 200, 0.8);
+}
+
+.gallery-badge-cmdr ~ .gallery-badge-tutor {
+  top: 26px;
+}
+
+.gallery-badge-combo ~ .gallery-badge-tutor {
+  top: 26px;
+}
+
+.gallery-badge-cmdr ~ .gallery-badge-combo ~ .gallery-badge-tutor {
+  top: 48px;
+}
+
+.gallery-price-eur {
+  color: #4fc3f7;
+  font-weight: 600;
+}
+
+.price-eur-cell {
+  color: #4fc3f7;
+  font-weight: 500;
+}
+
+.gallery-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gallery-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px dashed var(--border-color);
+  padding: 8px;
+}
+
+.placeholder-name {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  word-break: break-word;
+}
+
+/* Always-visible stats bar at the bottom of each card */
+.gallery-card-stats {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 6px;
+  background: rgba(0, 0, 0, 0.82);
+  font-size: 0.62rem;
+  color: rgba(255, 255, 255, 0.9);
+  z-index: 1;
+  backdrop-filter: blur(4px);
+}
+
+.gallery-card-stats > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.stat-icon {
+  font-size: 0.55rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.stat-val {
+  font-size: 0.6rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Overlay shows on hover — name + tags above the stats bar */
+.gallery-card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.92));
+  padding: 30px 8px 24px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.gallery-card:hover .gallery-card-overlay {
+  opacity: 1;
+}
+
+.overlay-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.overlay-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.overlay-tags .card-tag {
+  font-size: 0.55rem;
+  padding: 1px 5px;
+}
+
+/* Table view reuses existing card-list styles */
+.card-preview-floating {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.card-preview-floating img {
+  width: 260px;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+
+@media (max-width: 768px) {
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 6px;
+  }
+
+  .deck-gallery-controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

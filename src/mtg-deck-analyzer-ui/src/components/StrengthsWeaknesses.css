@@ -1,0 +1,48 @@
+.strengths-weaknesses h3 {
+  margin-bottom: 16px;
+}
+
+.sw-section {
+  margin-bottom: 16px;
+}
+
+.sw-section:last-child {
+  margin-bottom: 0;
+}
+
+.sw-strengths-title {
+  color: var(--accent-green);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.sw-weaknesses-title {
+  color: var(--accent-yellow);
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.sw-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sw-list li {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.sw-strength {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--text-primary);
+}
+
+.sw-weakness {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: var(--text-primary);
+}

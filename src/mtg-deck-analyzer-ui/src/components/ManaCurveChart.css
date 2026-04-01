@@ -1,0 +1,179 @@
+.mana-curve-chart h3 {
+  margin-bottom: 16px;
+}
+
+.mana-curve-chart h4 {
+  margin: 16px 0 12px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.mana-stats {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.mana-stat {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.mana-stat-icon {
+  font-size: 1.4rem;
+}
+
+.mana-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.mana-stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.color-dist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.color-dist-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.color-dist-label {
+  width: 70px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: right;
+}
+
+.color-dist-bars {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.color-dist-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.color-dist-bar span:first-child {
+  width: 50px;
+  text-align: right;
+}
+
+.mini-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mini-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.mini-bar-val {
+  width: 24px;
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Mana Coverage Table */
+.mana-coverage-table {
+  margin-top: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.mana-coverage-header,
+.mana-coverage-row {
+  display: grid;
+  grid-template-columns: 70px 50px 65px 60px 65px 1fr 80px;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 8px;
+  font-size: 0.78rem;
+}
+
+.mana-coverage-header {
+  background: var(--bg-secondary);
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  letter-spacing: 0.5px;
+}
+
+.mana-coverage-row {
+  border-top: 1px solid var(--border-color);
+}
+
+.mana-coverage-row:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.mc-col {
+  white-space: nowrap;
+}
+
+.mc-pips, .mc-sources, .mc-pct {
+  text-align: center;
+}
+
+.mc-cov {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.coverage-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.coverage-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.coverage-good { background: #22c55e; }
+.coverage-warning { background: #eab308; }
+.coverage-danger { background: #ef4444; }
+
+.coverage-val {
+  font-weight: 600;
+  font-size: 0.72rem;
+  min-width: 32px;
+  text-align: right;
+}
+
+.coverage-label-good { color: #22c55e; font-weight: 600; }
+.coverage-label-warning { color: #eab308; font-weight: 600; }
+.coverage-label-danger { color: #ef4444; font-weight: 600; }
