@@ -1,12 +1,6 @@
-using MTGDeckAnalyzer.Api.Models;
+using MTGDeckAnalyzer.Application.Models;
 
-namespace MTGDeckAnalyzer.Api.Services;
-
-public interface IPreconService
-{
-    Task<PreconSearchResult> SearchPreconsAsync(string? query = null, string? year = null, string[]? colors = null, int page = 1, int pageSize = 20);
-    Task<PreconDeck?> GetPreconByNameAsync(string name);
-}
+namespace MTGDeckAnalyzer.Application.Services;
 
 public class PreconService : IPreconService
 {
@@ -29,55 +23,20 @@ public class PreconService : IPreconService
             if (allPrecons.Count == 0)
             {
                 _logger.LogWarning("No precons loaded from ArchidektService, falling back to static data");
-                return await GetFallbackPrecons(query, year, colors, page, pageSize);
+                return GetFallbackPrecons(query, year, colors, page, pageSize);
             }
             
-            // Apply filters
-            var filtered = allPrecons.AsQueryable();
-
-            if (!string.IsNullOrEmpty(query))
-            {
-                var q = query.ToLower();
-                filtered = filtered.Where(p =>
-                    p.Name.ToLower().Contains(q) ||
-                    p.Commanders.Any(c => c.ToLower().Contains(q)) ||
-                    p.Theme.ToLower().Contains(q));
-            }
-
-            if (!string.IsNullOrEmpty(year))
-            {
-                filtered = filtered.Where(p => p.Year == year);
-            }
-
-            if (colors != null && colors.Length > 0)
-            {
-                var colorSet = colors.Select(c => c.ToUpper()).ToHashSet();
-                filtered = filtered.Where(p => p.ColorIdentity.Any(ci => colorSet.Contains(ci)));
-            }
-
-            var total = filtered.Count();
-            var precons = filtered
-                .OrderByDescending(p => int.TryParse(p.Year, out int y) ? y : 0) // Sort by year descending 
-                .ThenBy(p => p.Name)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            var (precons, total) = ApplyFiltersAndPage(allPrecons, query, year, colors, page, pageSize);
 
             _logger.LogInformation("Returning {Count} of {Total} precons for query: {Query}, year: {Year}, colors: {Colors}", 
                 precons.Count, total, query, year, colors != null ? string.Join(",", colors) : "none");
 
-            return new PreconSearchResult
-            {
-                Precons = precons,
-                TotalCount = total
-            };
+            return new PreconSearchResult { Precons = precons, TotalCount = total };
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to search precons");
-            
-            // Return fallback static data if everything fails
-            return await GetFallbackPrecons(query, year, colors, page, pageSize);
+            return GetFallbackPrecons(query, year, colors, page, pageSize);
         }
     }
 
@@ -109,44 +68,52 @@ public class PreconService : IPreconService
         }
     }
 
-    private async Task<PreconSearchResult> GetFallbackPrecons(string? query = null, string? year = null, string[]? colors = null, int page = 1, int pageSize = 20)
+    private PreconSearchResult GetFallbackPrecons(string? query = null, string? year = null, string[]? colors = null, int page = 1, int pageSize = 20)
     {
         _logger.LogWarning("Using fallback static precon data");
-        
-        var staticPrecons = GetStaticPrecons();
-        var filtered = staticPrecons.AsQueryable();
+        var (precons, total) = ApplyFiltersAndPage(GetStaticPrecons(), query, year, colors, page, pageSize);
+        return new PreconSearchResult { Precons = precons, TotalCount = total };
+    }
+
+    /// <summary>Applies search filters, sort, and pagination to a precon list.</summary>
+    private static (List<PreconDeck> precons, int total) ApplyFiltersAndPage(
+        List<PreconDeck> source,
+        string? query,
+        string? year,
+        string[]? colors,
+        int page,
+        int pageSize)
+    {
+        var filtered = source.AsQueryable();
 
         if (!string.IsNullOrEmpty(query))
         {
-            var q = query.ToLower();
+            var q = query.ToLowerInvariant();
             filtered = filtered.Where(p =>
-                p.Name.ToLower().Contains(q) ||
-                p.Commanders.Any(c => c.ToLower().Contains(q)) ||
-                p.Theme.ToLower().Contains(q));
+                p.Name.ToLowerInvariant().Contains(q) ||
+                p.Commanders.Any(c => c.ToLowerInvariant().Contains(q)) ||
+                p.Theme.ToLowerInvariant().Contains(q));
         }
 
         if (!string.IsNullOrEmpty(year))
-        {
             filtered = filtered.Where(p => p.Year == year);
-        }
 
-        if (colors != null && colors.Length > 0)
+        if (colors is { Length: > 0 })
         {
-            var colorSet = colors.Select(c => c.ToUpper()).ToHashSet();
+            var colorSet = colors.Select(c => c.ToUpperInvariant()).ToHashSet();
             filtered = filtered.Where(p => p.ColorIdentity.Any(ci => colorSet.Contains(ci)));
         }
 
         var total = filtered.Count();
         var precons = filtered
+            .AsEnumerable()
+            .OrderByDescending(p => int.TryParse(p.Year, out int y) ? y : 0)
+            .ThenBy(p => p.Name)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToList();
 
-        return new PreconSearchResult
-        {
-            Precons = precons,
-            TotalCount = total
-        };
+        return (precons, total);
     }
 
     private PreconDeck? GetStaticPreconByName(string name)

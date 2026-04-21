@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using MTGDeckAnalyzer.Api.Models;
-using MTGDeckAnalyzer.Api.Services;
+using MTGDeckAnalyzer.Application.Models;
+using MTGDeckAnalyzer.Application.Services;
 
 namespace MTGDeckAnalyzer.Api.Controllers;
 

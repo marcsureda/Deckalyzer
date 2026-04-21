@@ -1,11 +1,12 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
-using MTGDeckAnalyzer.Api.Models;
+using MTGDeckAnalyzer.Application.Models;
+using MTGDeckAnalyzer.Application.Services;
 
-namespace MTGDeckAnalyzer.Api.Services;
+namespace MTGDeckAnalyzer.Infrastructure.Scryfall;
 
-public class ScryfallService
+public class ScryfallService : IScryfallService
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<ScryfallService> _logger;
@@ -25,7 +26,7 @@ public class ScryfallService
         _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
     }
 
-    public async Task<List<ScryfallCard>> GetCardsByNames(List<string> cardNames)
+    public async Task<List<ScryfallCard>> GetCardsByNames(List<string> cardNames, CancellationToken cancellationToken = default)
     {
         var results = new List<ScryfallCard>();
         var uncachedNames = new List<string>();
@@ -101,7 +102,7 @@ public class ScryfallService
         return results;
     }
 
-    public async Task<ScryfallCard?> GetCardByName(string cardName)
+    public async Task<ScryfallCard?> GetCardByName(string cardName, CancellationToken cancellationToken = default)
     {
         await RespectRateLimit();
 
@@ -127,7 +128,7 @@ public class ScryfallService
     /// Fetches the official WotC game changer card names from Scryfall.
     /// Returns a HashSet containing both full DFC names and front-face-only names.
     /// </summary>
-    public async Task<HashSet<string>> GetGameChangerNamesAsync()
+    public async Task<HashSet<string>> GetGameChangerNamesAsync(CancellationToken cancellationToken = default)
     {
         const string cacheKey = "gamechangers";
         if (_cache.TryGetValue(cacheKey, out HashSet<string>? cached) && cached != null)
@@ -163,7 +164,7 @@ public class ScryfallService
         return names;
     }
 
-    public async Task<List<ScryfallCard>> SearchCards(string query)
+    public async Task<List<ScryfallCard>> SearchCards(string query, CancellationToken cancellationToken = default)
     {
         await RespectRateLimit();
         var results = new List<ScryfallCard>();
@@ -193,7 +194,7 @@ public class ScryfallService
     /// <summary>
     /// Fetches a card by its Scryfall API URI (e.g., from all_parts related cards).
     /// </summary>
-    public async Task<ScryfallCard?> GetCardByUri(string uri)
+    public async Task<ScryfallCard?> GetCardByUri(string uri, CancellationToken cancellationToken = default)
     {
         await RespectRateLimit();
 
@@ -235,7 +236,7 @@ public class ScryfallService
     /// For each card name, searches all printings and returns the cheapest EUR price (English, non-foil, paper)
     /// along with the Cardmarket link and image URI from that cheapest print.
     /// </summary>
-    public async Task<Dictionary<string, CheapestPrintInfo>> GetCheapestEurPrices(List<string> cardNames)
+    public async Task<Dictionary<string, CheapestPrintInfo>> GetCheapestEurPrices(List<string> cardNames, CancellationToken cancellationToken = default)
     {
         var result = new Dictionary<string, CheapestPrintInfo>(StringComparer.OrdinalIgnoreCase);
 
@@ -319,10 +320,3 @@ public class ScryfallService
     }
 }
 
-/// <summary>Price + metadata from the cheapest English print on Cardmarket.</summary>
-public class CheapestPrintInfo
-{
-    public double PriceEur { get; set; }
-    public string CardmarketUri { get; set; } = string.Empty;
-    public string ImageUri { get; set; } = string.Empty;
-}

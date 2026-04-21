@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/MTGDeckAnalyzer.Api/MTGDeckAnalyzer.Api.csproj" />
+    <Project Path="src/MTGDeckAnalyzer.Application/MTGDeckAnalyzer.Application.csproj" />
+    <Project Path="src/MTGDeckAnalyzer.Application.Tests/MTGDeckAnalyzer.Application.Tests.csproj" />
+    <Project Path="src/MTGDeckAnalyzer.Infrastructure/MTGDeckAnalyzer.Infrastructure.csproj" />
   </Folder>
 </Solution>

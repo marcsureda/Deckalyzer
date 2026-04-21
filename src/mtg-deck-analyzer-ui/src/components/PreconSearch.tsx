@@ -1,97 +1,61 @@
-import React, { useState, useEffect } from 'react';
-import { PreconDeck, PreconSearchResult } from '../types/deck';
-import { searchPrecons } from '../services/api';
+﻿import { usePreconSearch } from '../hooks/usePreconSearch';
+import { COLOR_ORDER, COLOR_NAMES, getColorSymbol, getColorCircle } from '../constants/colors';
+import type { PreconDeck } from '../types/deck';
 import './PreconSearch.css';
+
+const FALLBACK_IMAGE = 'https://cards.scryfall.io/art_crop/front/0/0/0000579f-7b35-4ed3-b44c-db2a538066fe.jpg';
+
+/** Year options from 2026 down to 2011. */
+const YEARS = Array.from({ length: 2026 - 2011 + 1 }, (_, i) => 2026 - i);
 
 interface PreconSearchProps {
   onSelectPrecon: (precon: PreconDeck) => void;
   onClose: () => void;
 }
 
-const PreconSearch: React.FC<PreconSearchProps> = ({ onSelectPrecon, onClose }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedYear, setSelectedYear] = useState('');
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [results, setResults] = useState<PreconSearchResult>({ precons: [], totalCount: 0 });
-  const [loading, setLoading] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const colors = ['W', 'U', 'B', 'R', 'G'];
-  const colorNames = { W: 'White', U: 'Blue', B: 'Black', R: 'Red', G: 'Green' };
-  const years = Array.from({ length: 2026 - 2011 + 1 }, (_, i) => 2026 - i);
-
-  useEffect(() => {
-    searchPreconDecks();
-  }, [searchQuery, selectedYear, selectedColors, currentPage]);
-
-  const searchPreconDecks = async () => {
-    setLoading(true);
-    try {
-      const result = await searchPrecons(searchQuery, selectedYear, selectedColors, currentPage, 12);
-      setResults(result);
-    } catch (error) {
-      console.error('Error searching precons:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleColor = (color: string) => {
-    setSelectedColors(prev => 
-      prev.includes(color) 
-        ? prev.filter(c => c !== color)
-        : [...prev, color]
-    );
-    setCurrentPage(1);
-  };
-
-  const clearFilters = () => {
-    setSearchQuery('');
-    setSelectedYear('');
-    setSelectedColors([]);
-    setCurrentPage(1);
-  };
-
-  const getColorSymbol = (color: string) => {
-    const symbols = {
-      W: '⚪', U: '🔵', B: '⚫', R: '🔴', G: '🟢'
-    };
-    return symbols[color as keyof typeof symbols] || color;
-  };
-
-  const totalPages = Math.ceil(results.totalCount / 12);
+export default function PreconSearch({ onSelectPrecon, onClose }: PreconSearchProps) {
+  const {
+    results,
+    loading,
+    searchQuery,
+    selectedYear,
+    selectedColors,
+    currentPage,
+    totalPages,
+    setSearchQuery,
+    setSelectedYear,
+    toggleColor,
+    clearFilters,
+    setCurrentPage,
+  } = usePreconSearch();
 
   return (
-    <div className="precon-search-overlay">
+    <div className="precon-search-overlay" role="dialog" aria-modal="true" aria-label="Choose a preconstructed deck">
       <div className="precon-search-modal">
         <div className="precon-search-header">
           <h2>🏛️ Choose a Preconstructed Deck</h2>
-          <button className="close-button" onClick={onClose}>✕</button>
+          <button className="close-button" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
         <div className="precon-filters">
           <div className="filter-row">
             <input
-              type="text"
+              type="search"
               placeholder="Search by name, theme, or commander..."
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="search-input"
+              aria-label="Search precon decks"
             />
-            
+
             <select
               value={selectedYear}
-              onChange={(e) => {
-                setSelectedYear(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => setSelectedYear(e.target.value)}
               className="year-select"
+              aria-label="Filter by year"
             >
               <option value="">All Years</option>
-              {years.map(year => (
+              {YEARS.map((year) => (
                 <option key={year} value={year}>{year}</option>
               ))}
             </select>
@@ -101,16 +65,17 @@ const PreconSearch: React.FC<PreconSearchProps> = ({ onSelectPrecon, onClose }) 
             </button>
           </div>
 
-          <div className="color-filters">
+          <div className="color-filters" role="group" aria-label="Filter by color">
             <span>Colors:</span>
-            {colors.map(color => (
+            {COLOR_ORDER.map((color) => (
               <button
                 key={color}
                 onClick={() => toggleColor(color)}
                 className={`color-button ${selectedColors.includes(color) ? 'selected' : ''}`}
-                title={colorNames[color as keyof typeof colorNames]}
+                aria-label={COLOR_NAMES[color]}
+                aria-pressed={selectedColors.includes(color)}
               >
-                {getColorSymbol(color)}
+                {getColorCircle(color)}
               </button>
             ))}
           </div>
@@ -118,70 +83,62 @@ const PreconSearch: React.FC<PreconSearchProps> = ({ onSelectPrecon, onClose }) 
 
         <div className="precon-results">
           {loading ? (
-            <div className="loading">Loading precons...</div>
+            <div className="loading" role="status" aria-live="polite">Loading precons...</div>
           ) : (
             <>
-              <div className="results-info">
+              <div className="results-info" aria-live="polite">
                 Found {results.totalCount} preconstructed deck{results.totalCount !== 1 ? 's' : ''}
               </div>
-              
+
               <div className="precon-grid">
                 {results.precons.map((precon) => (
-                  <div
+                  <button
                     key={precon.name}
                     className="precon-card"
                     onClick={() => onSelectPrecon(precon)}
+                    aria-label={`Select ${precon.name}`}
                   >
                     <div className="precon-image">
-                      <img 
-                        src={precon.imageUrl} 
-                        alt={precon.name}
+                      <img
+                        src={precon.imageUrl}
+                        alt=""
                         loading="lazy"
-                        onError={(e) => {
-                          console.log('Image failed to load:', precon.imageUrl);
-                          e.currentTarget.src = 'https://cards.scryfall.io/art_crop/front/0/0/0000579f-7b35-4ed3-b44c-db2a538066fe.jpg';
-                        }}
+                        onError={(e) => { e.currentTarget.src = FALLBACK_IMAGE; }}
                       />
                     </div>
                     <div className="precon-info">
                       <h3>{precon.name}</h3>
                       <div className="precon-year">{precon.year}</div>
                       <div className="precon-theme">{precon.theme}</div>
-                      <div className="precon-commanders">
-                        {precon.commanders.join(', ')}
-                      </div>
-                      <div className="precon-colors">
-                        {precon.colorIdentity.map(color => (
-                          <span key={color} className="color-pip">
-                            {getColorSymbol(color)}
-                          </span>
+                      <div className="precon-commanders">{precon.commanders.join(', ')}</div>
+                      <div className="precon-colors" aria-label="Color identity">
+                        {precon.colorIdentity.map((color) => (
+                          <span key={color} className="color-pip">{getColorSymbol(color)}</span>
                         ))}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
 
               {totalPages > 1 && (
-                <div className="pagination">
+                <nav className="pagination" aria-label="Precon search pages">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
+                    aria-label="Previous page"
                   >
                     ← Previous
                   </button>
-                  
-                  <span className="page-info">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  
+                  <span className="page-info">Page {currentPage} of {totalPages}</span>
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
+                    aria-label="Next page"
                   >
                     Next →
                   </button>
-                </div>
+                </nav>
               )}
             </>
           )}
@@ -189,6 +146,4 @@ const PreconSearch: React.FC<PreconSearchProps> = ({ onSelectPrecon, onClose }) 
       </div>
     </div>
   );
-};
-
-export default PreconSearch;
+}

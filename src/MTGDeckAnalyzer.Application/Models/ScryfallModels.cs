@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace MTGDeckAnalyzer.Api.Models;
+namespace MTGDeckAnalyzer.Application.Models;
 
 public class ScryfallCard
 {
@@ -195,4 +195,12 @@ public class ScryfallCollectionResult
 
     [JsonPropertyName("data")]
     public List<ScryfallCard> Data { get; set; } = [];
+}
+
+/// <summary>Price + metadata from the cheapest English print on Cardmarket.</summary>
+public class CheapestPrintInfo
+{
+    public double PriceEur { get; set; }
+    public string CardmarketUri { get; set; } = string.Empty;
+    public string ImageUri { get; set; } = string.Empty;
 }

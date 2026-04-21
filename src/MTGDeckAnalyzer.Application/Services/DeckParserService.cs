@@ -1,9 +1,9 @@
 using System.Text.RegularExpressions;
-using MTGDeckAnalyzer.Api.Models;
+using MTGDeckAnalyzer.Application.Models;
 
-namespace MTGDeckAnalyzer.Api.Services;
+namespace MTGDeckAnalyzer.Application.Services;
 
-public partial class DeckParserService
+public partial class DeckParserService : IDeckParser
 {
     public (List<string> commanders, List<(int quantity, string name)> mainCards, List<(int quantity, string name)> sideboardCards, List<string> warnings) ParseDeckList(string deckList)
     {

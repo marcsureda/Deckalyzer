@@ -1,18 +1,18 @@
-using MTGDeckAnalyzer.Api.Models;
+using MTGDeckAnalyzer.Application.Models;
 
-namespace MTGDeckAnalyzer.Api.Services;
+namespace MTGDeckAnalyzer.Application.Services;
 
-public class DeckAnalysisService
+public class DeckAnalysisService : IDeckAnalysisService
 {
-    private readonly ScryfallService _scryfall;
-    private readonly DeckParserService _parser;
-    private readonly PowerLevelAnalyzer _analyzer;
+    private readonly IScryfallService _scryfall;
+    private readonly IDeckParser _parser;
+    private readonly IPowerLevelAnalyzer _analyzer;
     private readonly ILogger<DeckAnalysisService> _logger;
 
     public DeckAnalysisService(
-        ScryfallService scryfall,
-        DeckParserService parser,
-        PowerLevelAnalyzer analyzer,
+        IScryfallService scryfall,
+        IDeckParser parser,
+        IPowerLevelAnalyzer analyzer,
         ILogger<DeckAnalysisService> logger)
     {
         _scryfall = scryfall;
@@ -21,7 +21,7 @@ public class DeckAnalysisService
         _logger = logger;
     }
 
-    public async Task<DeckAnalysisResult> AnalyzeDeck(string deckList)
+    public async Task<DeckAnalysisResult> AnalyzeDeck(string deckList, CancellationToken cancellationToken = default)
     {
         // Parse the decklist
         var (commanders, mainCards, sideboardCards, parseWarnings) = _parser.ParseDeckList(deckList);

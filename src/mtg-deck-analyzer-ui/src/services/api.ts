@@ -1,49 +1,68 @@
-import { DeckAnalysisRequest, DeckAnalysisResult, PreconSearchResult, PreconDeck } from '../types/deck';
+﻿import type { DeckAnalysisRequest, DeckAnalysisResult, PreconSearchResult, PreconDeck } from '../types/deck';
 
 const API_BASE = '/api';
 
-export async function analyzeDeck(request: DeckAnalysisRequest): Promise<DeckAnalysisResult> {
+/** Typed API error that carries the HTTP status alongside the message. */
+export class ApiError extends Error {
+  constructor(
+    public readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+/** Throws an ApiError for non-OK responses, extracting the server error message when available. */
+async function assertOk(response: Response): Promise<void> {
+  if (response.ok) return;
+  const body = await response.json().catch(() => null) as { error?: string } | null;
+  throw new ApiError(response.status, body?.error ?? `HTTP ${response.status}`);
+}
+
+export async function analyzeDeck(
+  request: DeckAnalysisRequest,
+  signal?: AbortSignal,
+): Promise<DeckAnalysisResult> {
   const response = await fetch(`${API_BASE}/deck/analyze`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request),
+    signal,
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-    throw new Error(error.error || `HTTP ${response.status}`);
-  }
-
-  return response.json();
+  await assertOk(response);
+  return response.json() as Promise<DeckAnalysisResult>;
 }
 
-export const searchPrecons = async (
-  query?: string,
-  year?: string,
-  colors?: string[],
-  page: number = 1,
-  pageSize: number = 20
-): Promise<PreconSearchResult> => {
-  const params = new URLSearchParams();
-  if (query) params.append('query', query);
-  if (year) params.append('year', year);
-  if (colors && colors.length > 0) {
-    colors.forEach(color => params.append('colors', color));
-  }
-  params.append('page', page.toString());
-  params.append('pageSize', pageSize.toString());
+/** Parameters for the precon search endpoint — groups all filter options. */
+export interface PreconSearchParams {
+  query?: string;
+  year?: string;
+  colors?: string[];
+  page?: number;
+  pageSize?: number;
+}
 
-  const response = await fetch(`${API_BASE}/precon/search?${params}`);
-  if (!response.ok) {
-    throw new Error('Failed to search precons');
-  }
-  return response.json();
-};
+export async function searchPrecons(
+  params: PreconSearchParams = {},
+  signal?: AbortSignal,
+): Promise<PreconSearchResult> {
+  const { query, year, colors, page = 1, pageSize = 20 } = params;
 
-export const getPrecon = async (name: string): Promise<PreconDeck> => {
-  const response = await fetch(`${API_BASE}/precon/${encodeURIComponent(name)}`);
-  if (!response.ok) {
-    throw new Error('Failed to get precon');
-  }
-  return response.json();
-};
+  const qs = new URLSearchParams();
+  if (query) qs.append('query', query);
+  if (year) qs.append('year', year);
+  colors?.forEach((c) => qs.append('colors', c));
+  qs.append('page', String(page));
+  qs.append('pageSize', String(pageSize));
+
+  const response = await fetch(`${API_BASE}/precon/search?${qs}`, { signal });
+  await assertOk(response);
+  return response.json() as Promise<PreconSearchResult>;
+}
+
+export async function getPrecon(name: string, signal?: AbortSignal): Promise<PreconDeck> {
+  const response = await fetch(`${API_BASE}/precon/${encodeURIComponent(name)}`, { signal });
+  await assertOk(response);
+  return response.json() as Promise<PreconDeck>;
+}

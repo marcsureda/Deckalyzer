@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using MTGDeckAnalyzer.Api.Models;
-using MTGDeckAnalyzer.Api.Services;
+using MTGDeckAnalyzer.Application.Models;
+using MTGDeckAnalyzer.Application.Services;
 
 namespace MTGDeckAnalyzer.Api.Controllers;
 
@@ -8,17 +8,17 @@ namespace MTGDeckAnalyzer.Api.Controllers;
 [Route("api/[controller]")]
 public class DeckController : ControllerBase
 {
-    private readonly DeckAnalysisService _analysisService;
+    private readonly IDeckAnalysisService _analysisService;
     private readonly ILogger<DeckController> _logger;
 
-    public DeckController(DeckAnalysisService analysisService, ILogger<DeckController> logger)
+    public DeckController(IDeckAnalysisService analysisService, ILogger<DeckController> logger)
     {
         _analysisService = analysisService;
         _logger = logger;
     }
 
     [HttpPost("analyze")]
-    public async Task<ActionResult<DeckAnalysisResult>> AnalyzeDeck([FromBody] DeckAnalysisRequest request)
+    public async Task<ActionResult<DeckAnalysisResult>> AnalyzeDeck([FromBody] DeckAnalysisRequest request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.DeckList))
         {
@@ -27,7 +27,7 @@ public class DeckController : ControllerBase
 
         try
         {
-            var result = await _analysisService.AnalyzeDeck(request.DeckList);
+            var result = await _analysisService.AnalyzeDeck(request.DeckList, cancellationToken);
             return Ok(result);
         }
         catch (ArgumentException ex)

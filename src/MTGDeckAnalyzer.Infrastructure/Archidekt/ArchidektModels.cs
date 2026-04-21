@@ -1,4 +1,4 @@
-namespace MTGDeckAnalyzer.Api.Models;
+namespace MTGDeckAnalyzer.Infrastructure.Archidekt;
 
 // Models for Archidekt API responses
 public class ArchidektDeck

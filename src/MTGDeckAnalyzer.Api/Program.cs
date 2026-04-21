@@ -1,4 +1,6 @@
-using MTGDeckAnalyzer.Api.Services;
+using MTGDeckAnalyzer.Application.Services;
+using MTGDeckAnalyzer.Infrastructure.Archidekt;
+using MTGDeckAnalyzer.Infrastructure.Scryfall;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,14 +19,19 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Register services
+// Infrastructure
 builder.Services.AddMemoryCache();
-builder.Services.AddHttpClient<ScryfallService>();
-builder.Services.AddHttpClient<ArchidektService>();
-builder.Services.AddSingleton<DeckParserService>();
-builder.Services.AddSingleton<PowerLevelAnalyzer>();
-builder.Services.AddScoped<DeckAnalysisService>();
-builder.Services.AddScoped<IArchidektService, ArchidektService>();
+
+// HTTP clients — typed registrations also satisfy the concrete type for DI
+builder.Services.AddHttpClient<IScryfallService, ScryfallService>();
+builder.Services.AddHttpClient<IArchidektService, ArchidektService>();
+
+// Domain services
+builder.Services.AddSingleton<IDeckParser, DeckParserService>();
+builder.Services.AddSingleton<IPowerLevelAnalyzer, PowerLevelAnalyzer>();
+
+// Application services
+builder.Services.AddScoped<IDeckAnalysisService, DeckAnalysisService>();
 builder.Services.AddScoped<IPreconService, PreconService>();
 
 var app = builder.Build();

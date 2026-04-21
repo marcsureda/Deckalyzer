@@ -1,4 +1,4 @@
-namespace MTGDeckAnalyzer.Api.Models;
+namespace MTGDeckAnalyzer.Application.Models;
 
 public class DeckAnalysisResult
 {

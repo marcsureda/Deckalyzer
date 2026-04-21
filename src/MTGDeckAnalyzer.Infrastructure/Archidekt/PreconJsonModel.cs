@@ -1,6 +1,8 @@
+using MTGDeckAnalyzer.Application.Models;
+
 using System.Text.Json.Serialization;
 
-namespace MTGDeckAnalyzer.Api.Models;
+namespace MTGDeckAnalyzer.Infrastructure.Archidekt;
 
 /// <summary>
 /// Model for deserializing precon JSON files with flexible property handling
